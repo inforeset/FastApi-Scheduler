@@ -32,7 +32,7 @@ async def startup():
     scheduler.start()
     logger.info('start scheduler')
     scheduler.add_listener(error_handler, EVENT_JOB_ERROR)
-    scheduler.add_job(check_table, 'cron', second='*/10')
+    scheduler.add_job(check_table, 'cron', minute='*/2')
 
 
 @app.on_event("shutdown")
