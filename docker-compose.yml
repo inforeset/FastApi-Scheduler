@@ -1,0 +1,53 @@
+version: '3.2'
+
+services:
+  app:
+    build:
+      context: .
+    stop_signal: SIGKILL
+    ports:
+      - 5000:5000
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db/test
+    volumes:
+      - ./logs_mount:/app/logs
+    logging:
+      driver: "local"
+
+  db:
+    container_name: db
+    image: postgres:15.0-alpine
+    command:
+      - "postgres"
+      - "-c"
+      - "log_destination=stderr"
+      - "-c"
+      - "logging_collector=on"
+      - "-c"
+      - "log_directory=/var/lib/postgresql/data/pg_log"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=512MB"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: test
+    volumes:
+      - ./postgres_db/postgres/postgresql-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  local:
+    driver: bridge
+
+volumes:
+  postgres_data:
